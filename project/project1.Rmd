@@ -1,0 +1,163 @@
+---
+title: 'Project 1: Exploratory Data Analysis - Jamie Hellwege, jrh5794'
+author: "SDS348"
+date: ''
+output:
+  html_document:
+    toc: yes
+    toc_float:
+      collapsed: no
+      smooth_scroll: yes
+  pdf_document:
+    toc: no
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, fig.align = "center", warning = F, message = F,
+tidy=TRUE, tidy.opts=list(width.cutoff=60), R.options=list(max.print=100))
+```
+
+## Data Wrangling and Data Exploration
+
+#### 0. Introduction (5  pts)
+I chosen my two data sets, titled "gdp" and "unemployed", because I wanted to see if there was a relationship between US GDP level, employment, and unemployment rates in the United States during the years 1941-2010. The "gdp" data set contains the year, the GDP in billions of current dollars, the DGP in billions of chained 2009 dollars, the GDP percent change based on current dollars, and the GDP percent change based on chained 2009 dollars. The "unemployed" data set contains the year, population, the number of people in the labor force, the percentage of the population in the labor force, the total number of employed people, the percentage of employed people, the ratio of people in agriculture and the people not working in agriculture, the total number of unemployed people, the percentage of unemployed people, and finally the number of people not in the labor force. All of these values are measured in thousands. There is also a footnotes column with a predominant amount of 'NAs' or '1s' that I will not include in my analysis. (Data set sources: https://datahub.io/core/gdp-us#readme and https://datahub.io/core/employment-us.)
+
+#### 1. Tidying: Rearranging Wide/Long (10 pts)
+``` {r}
+library(dplyr)
+library(tidyverse)
+aat1_csv <- read.csv("aat1_csv.csv")
+unemployed <- aat1_csv
+glimpse(unemployed)
+unemployed <- unemployed[-c(8), ]
+
+year_csv <- read.csv("year_csv.csv")
+gdp <- year_csv
+glimpse(gdp)
+
+tidiergdp <- gdp %>% pivot_longer(contains("."))%>%
+  separate(name,into=c("GDP","history")) %>%
+  pivot_wider(names_from="GDP",values_from="value") %>% 
+  rename("dollar_type"="history") %>%
+  filter(dollar_type != "chained")
+glimpse(tidiergdp)
+
+newunemployed <- unemployed %>% pivot_longer(contains("_percent")) %>% 
+  separate(name, into=c("category", "percent")) %>% 
+  rename("percentage"="value") %>% 
+  pivot_longer(contains("_ratio")) %>% 
+  separate(name, into=c("agricultural_type", "ratio")) %>% 
+  rename("total"="value")
+newunemployed$footnotes <- NULL
+newunemployed$percent<- NULL
+newunemployed$ratio <- NULL
+glimpse(newunemployed)
+
+```
+The first data set I cleaned was the gdp data set. In order to tidy this, I pivoted longer the two types of dollars that were in the data set (current and chained) and organized those as "history" and then organized the two GDP analyses (level and change) as "GDP".  I then pivoted the two GDP types wider and kept the values with the GDP types, resulting in a final, tidy data set. Then, analyzing the unemployed dataset, I pivoted the column that contained a percentage longer and separated them into a category that contained the population, employed, and unemployed percentages and renamed the second category percent, which just categorically described each of those values as a percentage (aka, all this column now said was "percent" for every row). I renamed the column of values for each category to "percentage" and deleted the column "percent" from the overall data set, since I had clarified that the values were the percentages. I repeated this process and pivoted longer all of the columns that contained a ratio and separated them based on agricultural type and ratio, which again just categorically said "ratio" for each row. I renamed the subsequent value column into "total" and deleted the column "ratio" from the overall data set. I did have to remove some observations to make analysis easier; in my original unemployed data set, I removed a duplicate 1947 year observation and in the tidiergdp data set, I removed all dollar_types that are "chained" (explained in more detail below). Finally, I also deleted the column titled "footnotes", since this contained mostly NAs and does not pertain to any of my analysis.  
+
+    
+#### 2. Joining/Merging (10 pts)
+``` {r}
+totaldata <- tidiergdp %>% inner_join(newunemployed, by=c("date"="year")) %>% 
+  rename("year"="date")
+totaldatasummary <- totaldata %>% group_by(year) %>% summarize(count=n())
+glimpse(totaldatasummary)
+```
+I chose to use an inner join instead of full join because the earliest year in the gdp data set is 1930, but the unemployed data set starts in the year 1941, so inner join will join both from 1941 on, while with full join I would have to omit the rows with NA, which would be an unnecessary extra step. One case was dropped from my data set (which was 12 rows total). In my original unemployed data set, there are two rows of data for the year 1947. This data set was created from information publicly posted by the Bureau of Labor Statistics from two different data sets; the first data set contained information from the years 1940-1947, and the second data set contained info from the years 1947-2020, but the information for 1947 in each data set did not match one another. I attempted to find out which set of data was accurate to no avail, so I dropped the second row of 1947 values, since I hypothesized that the were recorded second and there was a secretarial error. I removed the row before tidying the original unemployment data set and before joining my two sets to keep everything more organized. Keeping the second 1947 row would not make sense because I would find conflicting analyses, since years 1947 essentially contains two different sets of data. Furthermore, I also deleted all observations that contained "chained" as a dollar type because this is a measure of inflation that I'm not looking to analyze in my total data set and the values of "current" versus "chained" dollar types significantly vary across columns, which would skew any statistical analysis I conduct (such as mean or sd). Since the original unemployment data set had many columns that could be tidied into one another, each year in my joined totaldata data set has 12 observations.
+
+#### 3. Wrangling (40 pts)
+``` {r}
+totaldata %>% group_by(category) %>% summarize(median_percentage=median(percentage))
+totaldata %>% group_by(category) %>% summarize(sd_percentage=sd(percentage))
+totaldata %>% summarize(mean=mean(population))
+totaldata %>% summarize(min(unemployed))
+totaldata %>% summarize(max(employed_total))
+totaldata %>% summarize(mean=mean(level))
+totaldata %>% summarize(min(change))
+totaldata %>% summarize(max(labor_force))
+totaldata %>% summarize(mean=mean(not_in_labor))
+totaldata %>% summarize(min(change))
+totaldata %>% summarize(max(total))
+
+totaldata %>% select(Year=year, "Total GDP"=level, "Total Unemployed"=unemployed)
+totaldata %>% filter(year==1955) %>% select(category, percentage) %>% arrange(desc(percentage))
+
+totaldata %>% group_by(year) %>% select(employed_total, unemployed) %>% mutate(ratio=employed_total/unemployed) %>% arrange(desc(ratio))
+totaldata %>% group_by(year) %>% select(population, unemployed) %>% mutate(ratio2=population/unemployed) %>% arrange(-desc(ratio2))
+totaldata %>% group_by(year) %>% select(level, unemployed) %>% mutate(ratio3=unemployed/level) %>% arrange(-desc(ratio3))
+```
+The most interesting results of my data come from using mutate and finding the ratio of the total unemployed number of people to total GDP, total population, or total employed number of people for each year. A larger ratio of total employed to total unemployed is ideal because this means there are less people who are unemployed compared to the total employed population. The years with the highest and lowest ratios were 1944 (ratio = 80.537) and 1941 (ratio = 9.056), respectively. What is interesting about these findings are that the maximum and minimum ratios are within the same decade, and that the 1940s clearly saw a massive unemployment growth between 1941 and 1944. This likely has to do with the US' involvement in World War 2. A larger ratio of total population to unemployed people is also ideal because this means there are less people who are unemployed compared to the overall total population. The years with the highest and lowest ratios were 1944 (ratio2 = 139.134) and 2010 (16.042), respectively. It is interesting that the lowest ratio of unemployment was in 2010, because this was right after the stock market crash in 2008, which left many people unemployed. Finally, a larger ratio of unemployed people to the level of total GDP is not ideal because this means there are more unemployed people per billion US GDP. The years with the highest and lowest ratios were 1941 (ratio3 = 42.967) and 2007 (0.489), respectively. 2007 was the year before the housing crisis/stock market crash, showing that the US had the most stable and ideal ratio of unemployment to GDP level right before this crisis. Furthermore, the US had the greatest ratio of unemployment to GDP at the start of WW2, implying that the war had a major effect on reducing US GDP and increasing the umeployment total. Overall, the unemployment trends that are depicted in my mutation of ratios follow major global and societal events in the US, and it is interesting to correlate these major US events to unemployment rates.
+
+#### 4. Visualizing (30 pts)
+``` {r}
+library(tidyverse)
+cormat <- totaldata %>% select_if(is.numeric) %>% cor(use="pair")
+cormat
+heatmaptotaldata <- cormat %>% as.data.frame %>% rownames_to_column("var1") %>% pivot_longer(-1,names_to="var2", values_to="correlation")
+glimpse(heatmaptotaldata)
+
+heatmaptotaldata %>% ggplot(aes(var1, var2, fill=correlation)) + 
+  geom_tile() + 
+  scale_fill_gradient2(low="red", mid="white", high="blue") +
+  geom_text(aes(label=round(correlation, 2)), color="black", size=4) +
+  theme(axis.text.x=element_text(angle=90, hjust=1))+
+  coord_fixed()
+
+plot1 <- ggplot(totaldata, aes(population, unemployed, fill=year)) +
+  geom_point(aes(color=year)) + geom_line() +
+  geom_smooth(method="lm", color="red") + theme_minimal() +
+  theme(legend.position = "right", axis.text.x = element_text(face="bold", color="#993333", size=14, angle=45),axis.text.y = element_text(face="bold", color="#993333",size=14, angle=45)) 
+plot1 + ggtitle("Total Unemployment Change from 1941-2010") +
+  ylab("Total Unemployed (in thousands)") + xlab("Population (in thousands)")
+
+plot2 <- ggplot(totaldata, aes(level, unemployed)) + 
+  geom_point(aes(color=year)) +
+  theme_dark() + theme(legend.position = "right") + geom_line(aes(x = level, y = unemployed), colour = "white") +
+  geom_smooth(method="lm", color="green")
+plot2 + ggtitle("Total Unemployed Population Based On US GDP From 1941-2010") + ylab("Total Unemployed (in thousands)") + xlab("GDP (in billions of USD)")
+```
+Plot1 describes the relationship between the total population each year between 1941 and 2020 and the total number of unemployed people (both in thousands). Based on this graph, I found that as the population of the US increases with each year, so does the total number of unemployed people. The graph shows a clear upward linear trend, although the data is not very linear; instead, the graph is peppered with peaks and troughs. The peaks describe years where there were higher unemployment rates than usual (usual being the red line of regression) compared to the total US population during that time. The troughs describe years where the unemployment rates were lower than usual, and most likely represent a period of economic prosperity for US a higher increase in job opportunities. 
+Plot 2 compares the relationship of the increase in GDP of the US during those same years and the total number of unemployed people during each year. Although this graph also does not show a clear linear relationship, there is less highs and lows across each year, meaning the change in the relationship between GDP and the total number of unemployed people in the US each year remains more stable than the relationship between the total population and total unemployed people. The troughs describe years where the US had a lower number of unemployed people than usual (usual being the green regression line, representing the average relationship of the two variables) and the peaks represent years where there were higher unemployment totals compared to GDP than usual. It is interesting to see that the years 1974-1995 (approximately) were characterized by overall higher unemployment totals compared to the GDP, which was then followed by the years 1995-2009 which were characterized by lower unemployment totals compared to GDP and overall higher economic prosperity. 
+An interesting future analysis would be to compare what major events were happening in each decade to see how this correlates to the trends between each variable. For example, the years 1996-1999 show the lowest unemployment totals compared to GDP in recent years, so it would be interesting to analyze what societal factors could be causing this relationship. This goes for the inverse as well; the year 2020 has the highest unemployment total in the entire data set and I would love to evaluate what societal or political factors also could have caused this. One conclusion I noticed was the spike between 2008 and 2009 in unemployment; this is likely due to the economic crash that the US faced in 2008, which ended a period of low unemployment totals because many people lost their jobs. I would like to analyze more of these cause and effect trends. 
+    
+    
+#### 5. Dimensionality Reduction (30 pts) 
+``` {r}
+library(tidyverse)
+library(cluster)
+
+pam_dat <- totaldata %>% select(level,unemployed, employed_total)
+sil_width<-vector()
+for(i in 2:10){  
+  pam_fit <- pam(pam_dat, k = i)  
+  sil_width[i] <- pam_fit$silinfo$avg.width  
+}
+ggplot()+geom_line(aes(x=1:10,y=sil_width))+scale_x_continuous(name="k",breaks=1:10)
+
+pam2 <- totaldata %>% 
+  select(level, unemployed, employed_total) %>% pam(2)
+pam2
+totaldata %>% slice(pam2$id.med)
+
+pam2$silinfo$avg.width
+plot(pam2, which=2)
+
+final <-totaldata %>% 
+  select(level, unemployed, employed_total) %>%
+  mutate(cluster=pam2$clustering)
+final
+ggplot(dat=final, aes(x=level, y=unemployed, color=cluster))+ geom_point()
+
+library(GGally)
+ggpairs(final, columns=1:3, aes(color="cluster"))
+```
+The first step in my pam analysis was to create a silhouette width, which tells us our clustering goodness of fit, which is 2 clusters between my 3 variables. The average silhouette width is about 0.68 according to the ggplot. This is a reasonable cluster structure, meaning the clusters could be closer to one another and farther from each other but still show a relatively good clustering. I created a dataset (pam2) using the pam function specifying 2 clusters and the 3 chosen variables for analysis. I wanted to see the relationship between the GDP level in billions, the total number of people unemployed, and the total employed. The pam function shows the medoids for each of the two clusters using my three variables; row 109 is the medoid for the first cluster and row 319 is the medoid for the second cluster. Slicing the totaldata data set by the medoids will keep only the rows that make the medoids of my data, which gives essentially the same information from using the pam function but presented in a more concise fashion. The silhouette plot tells overall average silhouette width, which is 0.68, and the average silhouette width for each cluster, which is 0.74 for the first cluster and 0.61 for the second. A higher silhouette width means that the clusters are more cohesive and more separated from one another. Finally, I created a 2D graph based on the first two variables (level and unemployed), but clustered based on all 3 variables. Finally, I visualized all pairwise combinations of the 3 variables but found that when each of the three variables are compared to one another, the highest average silhouette width for each combo is strong when there is only one cluster, meaning that each variable individually does not cluster well against another variable. 
+
+
+```{r eval=F}
+## paste this chunk into the ```{r setup} chunk at the top of your project 1 .Rmd file
+
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, fig.align = "center", warning = F, message = F,
+tidy=TRUE, tidy.opts=list(width.cutoff=60), R.options=list(max.print=100))
+```

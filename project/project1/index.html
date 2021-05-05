@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="author" content="Jamie Hellwege" />
+    
+    <link rel="shortcut icon" type="image/x-icon" href="../../img/favicon.ico">
+    <title>Project 1: Exploratory Data Analysis - Jamie Hellwege, jrh5794</title>
+    <meta name="generator" content="Hugo 0.83.1" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="../../css/main.css" />
+    <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,400,200bold,400old" />
+    
+    <!--[if lt IE 9]>
+			<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+			<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+		<![endif]-->
+
+    
+  </head>
+
+  <body>
+    <div id="wrap">
+      
+      <nav class="navbar navbar-default">
+  <div class="container">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="../../"><i class="fa fa-home"></i></a>
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <div class="navbar-collapse collapse" id="navbar">
+      <ul class="nav navbar-nav navbar-right">
+      
+        
+        <li><a href="../../post/">BLOG</a></li>
+        
+        <li><a href="../../projects/">PROJECTS</a></li>
+        
+        <li><a href="../../resume/">RESUME</a></li>
+        
+      
+      </ul>
+    </div>
+  </div>
+</nav>
+
+      <div class="container">
+        <div class="blog-post">
+          <h3>
+            <strong><a href="../../project/project1/">Project 1: Exploratory Data Analysis - Jamie Hellwege, jrh5794</a></strong>
+          </h3>
+        </div>
+ 
+<div class="blog-title">
+          <h4>
+         January 1, 0001 
+            &nbsp;&nbsp;
+            
+          </h4>
+        </div>
+
+        <div class="panel panel-default">
+          <div class="panel-body">
+            <div class="blogpost">
+              
+
+
+<div id="data-wrangling-and-data-exploration" class="section level2">
+<h2>Data Wrangling and Data Exploration</h2>
+<div id="introduction-5-pts" class="section level4">
+<h4>0. Introduction (5 pts)</h4>
+<p>I chosen my two data sets, titled “gdp” and “unemployed”, because I wanted to see if there was a relationship between US GDP level, employment, and unemployment rates in the United States during the years 1941-2010. The “gdp” data set contains the year, the GDP in billions of current dollars, the DGP in billions of chained 2009 dollars, the GDP percent change based on current dollars, and the GDP percent change based on chained 2009 dollars. The “unemployed” data set contains the year, population, the number of people in the labor force, the percentage of the population in the labor force, the total number of employed people, the percentage of employed people, the ratio of people in agriculture and the people not working in agriculture, the total number of unemployed people, the percentage of unemployed people, and finally the number of people not in the labor force. All of these values are measured in thousands. There is also a footnotes column with a predominant amount of ‘NAs’ or ‘1s’ that I will not include in my analysis. (Data set sources: <a href="https://datahub.io/core/gdp-us#readme" class="uri">https://datahub.io/core/gdp-us#readme</a> and <a href="https://datahub.io/core/employment-us" class="uri">https://datahub.io/core/employment-us</a>.)</p>
+</div>
+<div id="tidying-rearranging-widelong-10-pts" class="section level4">
+<h4>1. Tidying: Rearranging Wide/Long (10 pts)</h4>
+<pre class="r"><code>library(dplyr)
+library(tidyverse)
+aat1_csv &lt;- read.csv(&quot;aat1_csv.csv&quot;)
+unemployed &lt;- aat1_csv
+glimpse(unemployed)</code></pre>
+<pre><code>## Rows: 71
+## Columns: 12
+## $ year                 &lt;int&gt; 1941, 1942, 1943, 1944, 1945, 1946, 1947, 1947, …
+## $ population           &lt;int&gt; 99900, 98640, 94640, 93220, 94090, 103070, 10601…
+## $ labor_force          &lt;int&gt; 55910, 56410, 55540, 54630, 53860, 57520, 60168,…
+## $ population_percent   &lt;dbl&gt; 56.0, 57.2, 58.7, 58.6, 57.2, 55.8, 56.8, 58.3, …
+## $ employed_total       &lt;int&gt; 50350, 53750, 54470, 53960, 52820, 55250, 57812,…
+## $ employed_percent     &lt;dbl&gt; 50.4, 54.5, 57.6, 57.9, 56.1, 53.6, 54.5, 56.0, …
+## $ agrictulture_ratio   &lt;int&gt; 9100, 9250, 9080, 8950, 8580, 8320, 8256, 7890, …
+## $ nonagriculture_ratio &lt;int&gt; 41250, 44500, 45390, 45010, 44240, 46930, 49557,…
+## $ unemployed           &lt;int&gt; 5560, 2660, 1070, 670, 1040, 2270, 2356, 2311, 2…
+## $ unemployed_percent   &lt;dbl&gt; 9.9, 4.7, 1.9, 1.2, 1.9, 3.9, 3.9, 3.9, 3.8, 5.9…
+## $ not_in_labor         &lt;int&gt; 43990, 42230, 39100, 38590, 40230, 45550, 45850,…
+## $ footnotes            &lt;int&gt; NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, …</code></pre>
+<pre class="r"><code>unemployed &lt;- unemployed[-c(8), ]
+
+year_csv &lt;- read.csv(&quot;year_csv.csv&quot;)
+gdp &lt;- year_csv
+glimpse(gdp)</code></pre>
+<pre><code>## Rows: 86
+## Columns: 5
+## $ date           &lt;int&gt; 1930, 1931, 1932, 1933, 1934, 1935, 1936, 1937, 1938, …
+## $ level.current  &lt;dbl&gt; 92.2, 77.4, 59.5, 57.2, 66.8, 74.3, 84.9, 93.0, 87.4, …
+## $ level.chained  &lt;dbl&gt; 966.7, 904.8, 788.2, 778.3, 862.2, 939.0, 1060.5, 1114…
+## $ change.current &lt;dbl&gt; -16.0, -23.1, -4.0, 16.9, 11.1, 14.3, 9.6, -6.1, 7.0, …
+## $ change.chained &lt;dbl&gt; -6.4, -12.9, -1.3, 10.8, 8.9, 12.9, 5.1, -3.3, 8.0, 8.…</code></pre>
+<pre class="r"><code>tidiergdp &lt;- gdp %&gt;% pivot_longer(contains(&quot;.&quot;)) %&gt;% separate(name, 
+    into = c(&quot;GDP&quot;, &quot;history&quot;)) %&gt;% pivot_wider(names_from = &quot;GDP&quot;, 
+    values_from = &quot;value&quot;) %&gt;% rename(dollar_type = &quot;history&quot;) %&gt;% 
+    filter(dollar_type != &quot;chained&quot;)
+glimpse(tidiergdp)</code></pre>
+<pre><code>## Rows: 86
+## Columns: 4
+## $ date        &lt;int&gt; 1930, 1931, 1932, 1933, 1934, 1935, 1936, 1937, 1938, 193…
+## $ dollar_type &lt;chr&gt; &quot;current&quot;, &quot;current&quot;, &quot;current&quot;, &quot;current&quot;, &quot;current&quot;, &quot;c…
+## $ level       &lt;dbl&gt; 92.2, 77.4, 59.5, 57.2, 66.8, 74.3, 84.9, 93.0, 87.4, 93.…
+## $ change      &lt;dbl&gt; -16.0, -23.1, -4.0, 16.9, 11.1, 14.3, 9.6, -6.1, 7.0, 10.…</code></pre>
+<pre class="r"><code>newunemployed &lt;- unemployed %&gt;% pivot_longer(contains(&quot;_percent&quot;)) %&gt;% 
+    separate(name, into = c(&quot;category&quot;, &quot;percent&quot;)) %&gt;% rename(percentage = &quot;value&quot;) %&gt;% 
+    pivot_longer(contains(&quot;_ratio&quot;)) %&gt;% separate(name, into = c(&quot;agricultural_type&quot;, 
+    &quot;ratio&quot;)) %&gt;% rename(total = &quot;value&quot;)
+newunemployed$footnotes &lt;- NULL
+newunemployed$percent &lt;- NULL
+newunemployed$ratio &lt;- NULL
+glimpse(newunemployed)</code></pre>
+<pre><code>## Rows: 420
+## Columns: 10
+## $ year              &lt;int&gt; 1941, 1941, 1941, 1941, 1941, 1941, 1942, 1942, 194…
+## $ population        &lt;int&gt; 99900, 99900, 99900, 99900, 99900, 99900, 98640, 98…
+## $ labor_force       &lt;int&gt; 55910, 55910, 55910, 55910, 55910, 55910, 56410, 56…
+## $ employed_total    &lt;int&gt; 50350, 50350, 50350, 50350, 50350, 50350, 53750, 53…
+## $ unemployed        &lt;int&gt; 5560, 5560, 5560, 5560, 5560, 5560, 2660, 2660, 266…
+## $ not_in_labor      &lt;int&gt; 43990, 43990, 43990, 43990, 43990, 43990, 42230, 42…
+## $ category          &lt;chr&gt; &quot;population&quot;, &quot;population&quot;, &quot;employed&quot;, &quot;employed&quot;,…
+## $ percentage        &lt;dbl&gt; 56.0, 56.0, 50.4, 50.4, 9.9, 9.9, 57.2, 57.2, 54.5,…
+## $ agricultural_type &lt;chr&gt; &quot;agrictulture&quot;, &quot;nonagriculture&quot;, &quot;agrictulture&quot;, &quot;…
+## $ total             &lt;int&gt; 9100, 41250, 9100, 41250, 9100, 41250, 9250, 44500,…</code></pre>
+<p>The first data set I cleaned was the gdp data set. In order to tidy this, I pivoted longer the two types of dollars that were in the data set (current and chained) and organized those as “history” and then organized the two GDP analyses (level and change) as “GDP”. I then pivoted the two GDP types wider and kept the values with the GDP types, resulting in a final, tidy data set. Then, analyzing the unemployed dataset, I pivoted the column that contained a percentage longer and separated them into a category that contained the population, employed, and unemployed percentages and renamed the second category percent, which just categorically described each of those values as a percentage (aka, all this column now said was “percent” for every row). I renamed the column of values for each category to “percentage” and deleted the column “percent” from the overall data set, since I had clarified that the values were the percentages. I repeated this process and pivoted longer all of the columns that contained a ratio and separated them based on agricultural type and ratio, which again just categorically said “ratio” for each row. I renamed the subsequent value column into “total” and deleted the column “ratio” from the overall data set. I did have to remove some observations to make analysis easier; in my original unemployed data set, I removed a duplicate 1947 year observation and in the tidiergdp data set, I removed all dollar_types that are “chained” (explained in more detail below). Finally, I also deleted the column titled “footnotes”, since this contained mostly NAs and does not pertain to any of my analysis.</p>
+</div>
+<div id="joiningmerging-10-pts" class="section level4">
+<h4>2. Joining/Merging (10 pts)</h4>
+<pre class="r"><code>totaldata &lt;- tidiergdp %&gt;% inner_join(newunemployed, by = c(date = &quot;year&quot;)) %&gt;% 
+    rename(year = &quot;date&quot;)
+totaldatasummary &lt;- totaldata %&gt;% group_by(year) %&gt;% summarize(count = n())
+glimpse(totaldatasummary)</code></pre>
+<pre><code>## Rows: 70
+## Columns: 2
+## $ year  &lt;int&gt; 1941, 1942, 1943, 1944, 1945, 1946, 1947, 1948, 1949, 1950, 195…
+## $ count &lt;int&gt; 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, …</code></pre>
+<p>I chose to use an inner join instead of full join because the earliest year in the gdp data set is 1930, but the unemployed data set starts in the year 1941, so inner join will join both from 1941 on, while with full join I would have to omit the rows with NA, which would be an unnecessary extra step. One case was dropped from my data set (which was 12 rows total). In my original unemployed data set, there are two rows of data for the year 1947. This data set was created from information publicly posted by the Bureau of Labor Statistics from two different data sets; the first data set contained information from the years 1940-1947, and the second data set contained info from the years 1947-2020, but the information for 1947 in each data set did not match one another. I attempted to find out which set of data was accurate to no avail, so I dropped the second row of 1947 values, since I hypothesized that the were recorded second and there was a secretarial error. I removed the row before tidying the original unemployment data set and before joining my two sets to keep everything more organized. Keeping the second 1947 row would not make sense because I would find conflicting analyses, since years 1947 essentially contains two different sets of data. Furthermore, I also deleted all observations that contained “chained” as a dollar type because this is a measure of inflation that I’m not looking to analyze in my total data set and the values of “current” versus “chained” dollar types significantly vary across columns, which would skew any statistical analysis I conduct (such as mean or sd). Since the original unemployment data set had many columns that could be tidied into one another, each year in my joined totaldata data set has 12 observations.</p>
+</div>
+<div id="wrangling-40-pts" class="section level4">
+<h4>3. Wrangling (40 pts)</h4>
+<pre class="r"><code>totaldata %&gt;% group_by(category) %&gt;% summarize(median_percentage = median(percentage))</code></pre>
+<pre><code>## # A tibble: 3 x 2
+##   category   median_percentage
+##   &lt;chr&gt;                  &lt;dbl&gt;
+## 1 employed                57.8
+## 2 population              61.4
+## 3 unemployed               5.5</code></pre>
+<pre class="r"><code>totaldata %&gt;% group_by(category) %&gt;% summarize(sd_percentage = sd(percentage))</code></pre>
+<pre><code>## # A tibble: 3 x 2
+##   category   sd_percentage
+##   &lt;chr&gt;              &lt;dbl&gt;
+## 1 employed            3.13
+## 2 population          3.49
+## 3 unemployed          1.81</code></pre>
+<pre class="r"><code>totaldata %&gt;% summarize(mean = mean(population))</code></pre>
+<pre><code>## # A tibble: 1 x 1
+##      mean
+##     &lt;dbl&gt;
+## 1 157050.</code></pre>
+<pre class="r"><code>totaldata %&gt;% summarize(min(unemployed))</code></pre>
+<pre><code>## # A tibble: 1 x 1
+##   `min(unemployed)`
+##               &lt;int&gt;
+## 1               670</code></pre>
+<pre class="r"><code>totaldata %&gt;% summarize(max(employed_total))</code></pre>
+<pre><code>## # A tibble: 1 x 1
+##   `max(employed_total)`
+##                   &lt;int&gt;
+## 1                146047</code></pre>
+<pre class="r"><code>totaldata %&gt;% summarize(mean = mean(level))</code></pre>
+<pre><code>## # A tibble: 1 x 1
+##    mean
+##   &lt;dbl&gt;
+## 1 4139.</code></pre>
+<pre class="r"><code>totaldata %&gt;% summarize(min(change))</code></pre>
+<pre><code>## # A tibble: 1 x 1
+##   `min(change)`
+##           &lt;dbl&gt;
+## 1            -2</code></pre>
+<pre class="r"><code>totaldata %&gt;% summarize(max(labor_force))</code></pre>
+<pre><code>## # A tibble: 1 x 1
+##   `max(labor_force)`
+##                &lt;int&gt;
+## 1             154287</code></pre>
+<pre class="r"><code>totaldata %&gt;% summarize(mean = mean(not_in_labor))</code></pre>
+<pre><code>## # A tibble: 1 x 1
+##     mean
+##    &lt;dbl&gt;
+## 1 57780.</code></pre>
+<pre class="r"><code>totaldata %&gt;% summarize(min(change))</code></pre>
+<pre><code>## # A tibble: 1 x 1
+##   `min(change)`
+##           &lt;dbl&gt;
+## 1            -2</code></pre>
+<pre class="r"><code>totaldata %&gt;% summarize(max(total))</code></pre>
+<pre><code>## # A tibble: 1 x 1
+##   `max(total)`
+##          &lt;int&gt;
+## 1       143952</code></pre>
+<pre class="r"><code>totaldata %&gt;% select(Year = year, `Total GDP` = level, `Total Unemployed` = unemployed)</code></pre>
+<pre><code>## # A tibble: 420 x 3
+##     Year `Total GDP` `Total Unemployed`
+##    &lt;int&gt;       &lt;dbl&gt;              &lt;int&gt;
+##  1  1941        129.               5560
+##  2  1941        129.               5560
+##  3  1941        129.               5560
+##  4  1941        129.               5560
+##  5  1941        129.               5560
+##  6  1941        129.               5560
+##  7  1942        166                2660
+##  8  1942        166                2660
+##  9  1942        166                2660
+## 10  1942        166                2660
+## # … with 410 more rows</code></pre>
+<pre class="r"><code>totaldata %&gt;% filter(year == 1955) %&gt;% select(category, percentage) %&gt;% 
+    arrange(desc(percentage))</code></pre>
+<pre><code>## # A tibble: 6 x 2
+##   category   percentage
+##   &lt;chr&gt;           &lt;dbl&gt;
+## 1 population       59.3
+## 2 population       59.3
+## 3 employed         56.7
+## 4 employed         56.7
+## 5 unemployed        4.4
+## 6 unemployed        4.4</code></pre>
+<pre class="r"><code>totaldata %&gt;% group_by(year) %&gt;% select(employed_total, unemployed) %&gt;% 
+    mutate(ratio = employed_total/unemployed) %&gt;% arrange(desc(ratio))</code></pre>
+<pre><code>## # A tibble: 420 x 4
+## # Groups:   year [70]
+##     year employed_total unemployed ratio
+##    &lt;int&gt;          &lt;int&gt;      &lt;int&gt; &lt;dbl&gt;
+##  1  1944          53960        670  80.5
+##  2  1944          53960        670  80.5
+##  3  1944          53960        670  80.5
+##  4  1944          53960        670  80.5
+##  5  1944          53960        670  80.5
+##  6  1944          53960        670  80.5
+##  7  1943          54470       1070  50.9
+##  8  1943          54470       1070  50.9
+##  9  1943          54470       1070  50.9
+## 10  1943          54470       1070  50.9
+## # … with 410 more rows</code></pre>
+<pre class="r"><code>totaldata %&gt;% group_by(year) %&gt;% select(population, unemployed) %&gt;% 
+    mutate(ratio2 = population/unemployed) %&gt;% arrange(-desc(ratio2))</code></pre>
+<pre><code>## # A tibble: 420 x 4
+## # Groups:   year [70]
+##     year population unemployed ratio2
+##    &lt;int&gt;      &lt;int&gt;      &lt;int&gt;  &lt;dbl&gt;
+##  1  2010     237830      14825   16.0
+##  2  2010     237830      14825   16.0
+##  3  2010     237830      14825   16.0
+##  4  2010     237830      14825   16.0
+##  5  2010     237830      14825   16.0
+##  6  2010     237830      14825   16.0
+##  7  1982     172271      10678   16.1
+##  8  1982     172271      10678   16.1
+##  9  1982     172271      10678   16.1
+## 10  1982     172271      10678   16.1
+## # … with 410 more rows</code></pre>
+<pre class="r"><code>totaldata %&gt;% group_by(year) %&gt;% select(level, unemployed) %&gt;% 
+    mutate(ratio3 = unemployed/level) %&gt;% arrange(-desc(ratio3))</code></pre>
+<pre><code>## # A tibble: 420 x 4
+## # Groups:   year [70]
+##     year  level unemployed ratio3
+##    &lt;int&gt;  &lt;dbl&gt;      &lt;int&gt;  &lt;dbl&gt;
+##  1  2007 14478.       7078  0.489
+##  2  2007 14478.       7078  0.489
+##  3  2007 14478.       7078  0.489
+##  4  2007 14478.       7078  0.489
+##  5  2007 14478.       7078  0.489
+##  6  2007 14478.       7078  0.489
+##  7  2006 13856.       7001  0.505
+##  8  2006 13856.       7001  0.505
+##  9  2006 13856.       7001  0.505
+## 10  2006 13856.       7001  0.505
+## # … with 410 more rows</code></pre>
+<p>The most interesting results of my data come from using mutate and finding the ratio of the total unemployed number of people to total GDP, total population, or total employed number of people for each year. A larger ratio of total employed to total unemployed is ideal because this means there are less people who are unemployed compared to the total employed population. The years with the highest and lowest ratios were 1944 (ratio = 80.537) and 1941 (ratio = 9.056), respectively. What is interesting about these findings are that the maximum and minimum ratios are within the same decade, and that the 1940s clearly saw a massive unemployment growth between 1941 and 1944. This likely has to do with the US’ involvement in World War 2. A larger ratio of total population to unemployed people is also ideal because this means there are less people who are unemployed compared to the overall total population. The years with the highest and lowest ratios were 1944 (ratio2 = 139.134) and 2010 (16.042), respectively. It is interesting that the lowest ratio of unemployment was in 2010, because this was right after the stock market crash in 2008, which left many people unemployed. Finally, a larger ratio of unemployed people to the level of total GDP is not ideal because this means there are more unemployed people per billion US GDP. The years with the highest and lowest ratios were 1941 (ratio3 = 42.967) and 2007 (0.489), respectively. 2007 was the year before the housing crisis/stock market crash, showing that the US had the most stable and ideal ratio of unemployment to GDP level right before this crisis. Furthermore, the US had the greatest ratio of unemployment to GDP at the start of WW2, implying that the war had a major effect on reducing US GDP and increasing the umeployment total. Overall, the unemployment trends that are depicted in my mutation of ratios follow major global and societal events in the US, and it is interesting to correlate these major US events to unemployment rates.</p>
+</div>
+<div id="visualizing-30-pts" class="section level4">
+<h4>4. Visualizing (30 pts)</h4>
+<pre class="r"><code>library(tidyverse)
+cormat &lt;- totaldata %&gt;% select_if(is.numeric) %&gt;% cor(use = &quot;pair&quot;)
+cormat</code></pre>
+<pre><code>##                       year       level      change  population labor_force
+## year            1.00000000  0.91021524 -0.33417464  0.99244431  0.98978500
+## level           0.91021524  1.00000000 -0.36760976  0.93876614  0.93764347
+## change         -0.33417464 -0.36760976  1.00000000 -0.30087152 -0.31115940
+## population      0.99244431  0.93876614 -0.30087152  1.00000000  0.99844015
+## labor_force     0.98978500  0.93764347 -0.31115940  0.99844015  1.00000000
+## employed_total  0.98771834  0.94085498 -0.32853258  0.99578542  0.99851322
+## unemployed      0.81832218  0.72097707 -0.06819340  0.83145356  0.82045685
+## not_in_labor    0.98308316  0.92596689 -0.26658674  0.98739327  0.97701557
+## percentage      0.08487064  0.07422628 -0.02567812  0.08488618  0.08601444
+## total           0.31453954  0.29961606 -0.10462125  0.31710867  0.31797732
+##                employed_total  unemployed not_in_labor  percentage       total
+## year                0.9877183  0.81832218   0.98308316  0.08487064  0.31453954
+## level               0.9408550  0.72097707   0.92596689  0.07422628  0.29961606
+## change             -0.3285326 -0.06819340  -0.26658674 -0.02567812 -0.10462125
+## population          0.9957854  0.83145356   0.98739327  0.08488618  0.31710867
+## labor_force         0.9985132  0.82045685   0.97701557  0.08601444  0.31797732
+## employed_total      1.0000000  0.78807317   0.97109535  0.08569010  0.31845074
+## unemployed          0.7880732  1.00000000   0.84846583  0.07263107  0.25096301
+## not_in_labor        0.9710954  0.84846583   1.00000000  0.08024176  0.30924615
+## percentage          0.0856901  0.07263107   0.08024176  1.00000000  0.02728807
+## total               0.3184507  0.25096301   0.30924615  0.02728807  1.00000000</code></pre>
+<pre class="r"><code>heatmaptotaldata &lt;- cormat %&gt;% as.data.frame %&gt;% rownames_to_column(&quot;var1&quot;) %&gt;% 
+    pivot_longer(-1, names_to = &quot;var2&quot;, values_to = &quot;correlation&quot;)
+glimpse(heatmaptotaldata)</code></pre>
+<pre><code>## Rows: 100
+## Columns: 3
+## $ var1        &lt;chr&gt; &quot;year&quot;, &quot;year&quot;, &quot;year&quot;, &quot;year&quot;, &quot;year&quot;, &quot;year&quot;, &quot;year&quot;, &quot;…
+## $ var2        &lt;chr&gt; &quot;year&quot;, &quot;level&quot;, &quot;change&quot;, &quot;population&quot;, &quot;labor_force&quot;, &quot;…
+## $ correlation &lt;dbl&gt; 1.00000000, 0.91021524, -0.33417464, 0.99244431, 0.989785…</code></pre>
+<pre class="r"><code>heatmaptotaldata %&gt;% ggplot(aes(var1, var2, fill = correlation)) + 
+    geom_tile() + scale_fill_gradient2(low = &quot;red&quot;, mid = &quot;white&quot;, 
+    high = &quot;blue&quot;) + geom_text(aes(label = round(correlation, 
+    2)), color = &quot;black&quot;, size = 4) + theme(axis.text.x = element_text(angle = 90, 
+    hjust = 1)) + coord_fixed()</code></pre>
+<p><img src="../../project/project1_files/figure-html/unnamed-chunk-4-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>plot1 &lt;- ggplot(totaldata, aes(population, unemployed, fill = year)) + 
+    geom_point(aes(color = year)) + geom_line() + geom_smooth(method = &quot;lm&quot;, 
+    color = &quot;red&quot;) + theme_minimal() + theme(legend.position = &quot;right&quot;, 
+    axis.text.x = element_text(face = &quot;bold&quot;, color = &quot;#993333&quot;, 
+        size = 14, angle = 45), axis.text.y = element_text(face = &quot;bold&quot;, 
+        color = &quot;#993333&quot;, size = 14, angle = 45))
+plot1 + ggtitle(&quot;Total Unemployment Change from 1941-2010&quot;) + 
+    ylab(&quot;Total Unemployed (in thousands)&quot;) + xlab(&quot;Population (in thousands)&quot;)</code></pre>
+<p><img src="../../project/project1_files/figure-html/unnamed-chunk-4-2.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>plot2 &lt;- ggplot(totaldata, aes(level, unemployed)) + geom_point(aes(color = year)) + 
+    theme_dark() + theme(legend.position = &quot;right&quot;) + geom_line(aes(x = level, 
+    y = unemployed), colour = &quot;white&quot;) + geom_smooth(method = &quot;lm&quot;, 
+    color = &quot;green&quot;)
+plot2 + ggtitle(&quot;Total Unemployed Population Based On US GDP From 1941-2010&quot;) + 
+    ylab(&quot;Total Unemployed (in thousands)&quot;) + xlab(&quot;GDP (in billions of USD)&quot;)</code></pre>
+<p><img src="../../project/project1_files/figure-html/unnamed-chunk-4-3.png" width="672" style="display: block; margin: auto;" />
+Plot1 describes the relationship between the total population each year between 1941 and 2020 and the total number of unemployed people (both in thousands). Based on this graph, I found that as the population of the US increases with each year, so does the total number of unemployed people. The graph shows a clear upward linear trend, although the data is not very linear; instead, the graph is peppered with peaks and troughs. The peaks describe years where there were higher unemployment rates than usual (usual being the red line of regression) compared to the total US population during that time. The troughs describe years where the unemployment rates were lower than usual, and most likely represent a period of economic prosperity for US a higher increase in job opportunities.
+Plot 2 compares the relationship of the increase in GDP of the US during those same years and the total number of unemployed people during each year. Although this graph also does not show a clear linear relationship, there is less highs and lows across each year, meaning the change in the relationship between GDP and the total number of unemployed people in the US each year remains more stable than the relationship between the total population and total unemployed people. The troughs describe years where the US had a lower number of unemployed people than usual (usual being the green regression line, representing the average relationship of the two variables) and the peaks represent years where there were higher unemployment totals compared to GDP than usual. It is interesting to see that the years 1974-1995 (approximately) were characterized by overall higher unemployment totals compared to the GDP, which was then followed by the years 1995-2009 which were characterized by lower unemployment totals compared to GDP and overall higher economic prosperity.
+An interesting future analysis would be to compare what major events were happening in each decade to see how this correlates to the trends between each variable. For example, the years 1996-1999 show the lowest unemployment totals compared to GDP in recent years, so it would be interesting to analyze what societal factors could be causing this relationship. This goes for the inverse as well; the year 2020 has the highest unemployment total in the entire data set and I would love to evaluate what societal or political factors also could have caused this. One conclusion I noticed was the spike between 2008 and 2009 in unemployment; this is likely due to the economic crash that the US faced in 2008, which ended a period of low unemployment totals because many people lost their jobs. I would like to analyze more of these cause and effect trends.</p>
+</div>
+<div id="dimensionality-reduction-30-pts" class="section level4">
+<h4>5. Dimensionality Reduction (30 pts)</h4>
+<pre class="r"><code>library(tidyverse)
+library(cluster)
+
+pam_dat &lt;- totaldata %&gt;% select(level, unemployed, employed_total)
+sil_width &lt;- vector()
+for (i in 2:10) {
+    pam_fit &lt;- pam(pam_dat, k = i)
+    sil_width[i] &lt;- pam_fit$silinfo$avg.width
+}
+ggplot() + geom_line(aes(x = 1:10, y = sil_width)) + scale_x_continuous(name = &quot;k&quot;, 
+    breaks = 1:10)</code></pre>
+<p><img src="../../project/project1_files/figure-html/unnamed-chunk-5-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>pam2 &lt;- totaldata %&gt;% select(level, unemployed, employed_total) %&gt;% 
+    pam(2)
+pam2</code></pre>
+<pre><code>## Medoids:
+##       ID  level unemployed employed_total
+## [1,] 109  522.5       3740          64630
+## [2,] 319 7308.8       7996         123060
+## Clustering vector:
+##   [1] 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+##  [38] 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+##  [75] 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+##  [ reached getOption(&quot;max.print&quot;) -- omitted 320 entries ]
+## Objective function:
+##    build     swap 
+## 15949.60 11672.13 
+## 
+## Available components:
+##  [1] &quot;medoids&quot;    &quot;id.med&quot;     &quot;clustering&quot; &quot;objective&quot;  &quot;isolation&quot; 
+##  [6] &quot;clusinfo&quot;   &quot;silinfo&quot;    &quot;diss&quot;       &quot;call&quot;       &quot;data&quot;</code></pre>
+<pre class="r"><code>totaldata %&gt;% slice(pam2$id.med)</code></pre>
+<pre><code>## # A tibble: 2 x 13
+##    year dollar_type level change population labor_force employed_total
+##   &lt;int&gt; &lt;chr&gt;       &lt;dbl&gt;  &lt;dbl&gt;      &lt;int&gt;       &lt;int&gt;          &lt;int&gt;
+## 1  1959 current      522.    4       115329       68369          64630
+## 2  1994 current     7309.    4.9     196814      131056         123060
+## # … with 6 more variables: unemployed &lt;int&gt;, not_in_labor &lt;int&gt;,
+## #   category &lt;chr&gt;, percentage &lt;dbl&gt;, agricultural_type &lt;chr&gt;, total &lt;int&gt;</code></pre>
+<pre class="r"><code>pam2$silinfo$avg.width</code></pre>
+<pre><code>## [1] 0.6820386</code></pre>
+<pre class="r"><code>plot(pam2, which = 2)</code></pre>
+<p><img src="../../project/project1_files/figure-html/unnamed-chunk-5-2.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>final &lt;- totaldata %&gt;% select(level, unemployed, employed_total) %&gt;% 
+    mutate(cluster = pam2$clustering)
+final</code></pre>
+<pre><code>## # A tibble: 420 x 4
+##    level unemployed employed_total cluster
+##    &lt;dbl&gt;      &lt;int&gt;          &lt;int&gt;   &lt;int&gt;
+##  1  129.       5560          50350       1
+##  2  129.       5560          50350       1
+##  3  129.       5560          50350       1
+##  4  129.       5560          50350       1
+##  5  129.       5560          50350       1
+##  6  129.       5560          50350       1
+##  7  166        2660          53750       1
+##  8  166        2660          53750       1
+##  9  166        2660          53750       1
+## 10  166        2660          53750       1
+## # … with 410 more rows</code></pre>
+<pre class="r"><code>ggplot(dat = final, aes(x = level, y = unemployed, color = cluster)) + 
+    geom_point()</code></pre>
+<p><img src="../../project/project1_files/figure-html/unnamed-chunk-5-3.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>library(GGally)
+ggpairs(final, columns = 1:3, aes(color = &quot;cluster&quot;))</code></pre>
+<p><img src="../../project/project1_files/figure-html/unnamed-chunk-5-4.png" width="672" style="display: block; margin: auto;" />
+The first step in my pam analysis was to create a silhouette width, which tells us our clustering goodness of fit, which is 2 clusters between my 3 variables. The average silhouette width is about 0.68 according to the ggplot. This is a reasonable cluster structure, meaning the clusters could be closer to one another and farther from each other but still show a relatively good clustering. I created a dataset (pam2) using the pam function specifying 2 clusters and the 3 chosen variables for analysis. I wanted to see the relationship between the GDP level in billions, the total number of people unemployed, and the total employed. The pam function shows the medoids for each of the two clusters using my three variables; row 109 is the medoid for the first cluster and row 319 is the medoid for the second cluster. Slicing the totaldata data set by the medoids will keep only the rows that make the medoids of my data, which gives essentially the same information from using the pam function but presented in a more concise fashion. The silhouette plot tells overall average silhouette width, which is 0.68, and the average silhouette width for each cluster, which is 0.74 for the first cluster and 0.61 for the second. A higher silhouette width means that the clusters are more cohesive and more separated from one another. Finally, I created a 2D graph based on the first two variables (level and unemployed), but clustered based on all 3 variables. Finally, I visualized all pairwise combinations of the 3 variables but found that when each of the three variables are compared to one another, the highest average silhouette width for each combo is strong when there is only one cluster, meaning that each variable individually does not cluster well against another variable.</p>
+<pre class="r"><code>## paste this chunk into the ```{r setup} chunk at the top of
+## your project 1 .Rmd file
+
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, fig.align = &quot;center&quot;, 
+    warning = F, message = F, tidy = TRUE, tidy.opts = list(width.cutoff = 60), 
+    R.options = list(max.print = 100))</code></pre>
+</div>
+</div>
+
+            
+        <hr>         <div class="related-posts">
+                <h5>Related Posts</h5>
+                
+              </div> 
+            </div>
+          </div>
+
+   <hr>  <div class="disqus">
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+
+    (function() {
+      
+      
+      if (window.location.hostname == "localhost")
+        return;
+
+      var disqus_shortname = '';
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  <a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</div> 
+        </div>
+      </div>
+    </div>
+
+    
+    <footer>
+  <div id="footer">
+    <div class="container">
+      <p class="text-muted">&copy; All rights reserved. Powered by <a href="https://gohugo.io/">Hugo</a> and
+      <a href="http://www.github.com/nurlansu/hugo-sustain/">sustain</a> with ♥</p>
+    </div>
+  </div>
+</footer>
+<div class="footer"></div>
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+<script src="../../js/docs.min.js"></script>
+<script src="../../js/main.js"></script>
+
+<script src="../../js/ie10-viewport-bug-workaround.js"></script>
+
+
+    
+  </body>
+</html>
